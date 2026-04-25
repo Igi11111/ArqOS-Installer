@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=ArqOS Installer
+
+Exec=python /usr/share/linexin-installer/installer
+
+Icon=/usr/share/linexin-installer/images/github.petexy.arqosinstaller.svg
+
+Terminal=false
+Type=Application
+Categories=GTK; Installer;System;Arq;Adwaita;
+StartupNotify=false
