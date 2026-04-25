@@ -1,6 +1,6 @@
 # ArqOS Installer
 <p align="center">
-  <img src="https://i.ibb.co/fdtKjBFg/github-petexy-linexininstaller.png" alt="logo" with="200" height="200"/>
+  <img src="src/usr/share/linexin-installer/images/github.petexy.linexininstaller.png" alt="logo" with="200" height="200"/>
 </p>
 
 The ArqOS Installer is a modern, user-friendly graphical installation tool for ArqOS, an Arch Linux-based distribution. It can be modified to support other distributions. Built with GTK4 and libadwaita, it provides a streamlined installation experience with features including:
