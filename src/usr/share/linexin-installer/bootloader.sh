@@ -2,12 +2,43 @@
 set -e
 
 echo "=============================================="
-echo "    Installing Bootloader for ArqOS"
+echo "    Installing Bootloader for ArqOS v2"
 echo "=============================================="
 
-# Usuń hooki archiso z mkinitcpio.conf
-echo "[1/4] Fixing mkinitcpio.conf..."
+echo ""
+echo "[1/5] Cleaning archiso configurations..."
+
+# KROK 1: Usuń wszystkie pliki archiso z mkinitcpio.conf.d
+if [ -d /etc/mkinitcpio.conf.d ]; then
+    echo "Removing all files from /etc/mkinitcpio.conf.d/..."
+    rm -rf /etc/mkinitcpio.conf.d/*
+    echo "✓ Cleaned /etc/mkinitcpio.conf.d/"
+fi
+
+# KROK 2: Napraw preset files - usuń referencje do archiso
+echo "Fixing preset files..."
+for preset in /etc/mkinitcpio.d/*.preset; do
+    if [ -f "$preset" ]; then
+        echo "  Checking $preset..."
+
+        # Usuń linie zawierające archiso
+        sed -i '/archiso/d' "$preset" 2>/dev/null || true
+
+        # Usuń puste linie ALL_config= lub PRESETS=
+        sed -i '/^ALL_config=$/d' "$preset" 2>/dev/null || true
+        sed -i '/^PRESETS=()$/d' "$preset" 2>/dev/null || true
+
+        echo "  ✓ Fixed $preset"
+    fi
+done
+
+# KROK 3: Napraw główny plik konfiguracyjny
+echo "Fixing /etc/mkinitcpio.conf..."
 if [ -f /etc/mkinitcpio.conf ]; then
+    # Backup
+    cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.backup
+
+    # Usuń wszystkie hooki archiso
     sed -i 's/archiso//g' /etc/mkinitcpio.conf
     sed -i 's/archiso_loop_mnt//g' /etc/mkinitcpio.conf
     sed -i 's/archiso_pxe_common//g' /etc/mkinitcpio.conf
@@ -15,25 +46,55 @@ if [ -f /etc/mkinitcpio.conf ]; then
     sed -i 's/archiso_pxe_http//g' /etc/mkinitcpio.conf
     sed -i 's/archiso_pxe_nfs//g' /etc/mkinitcpio.conf
     sed -i 's/memdisk//g' /etc/mkinitcpio.conf
+
+    # Wyczyść podwójne spacje
     sed -i 's/  */ /g' /etc/mkinitcpio.conf
+
+    # Ustaw standardowe HOOKS
     sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect modconf kms keyboard keymap consolefont block filesystems fsck)/' /etc/mkinitcpio.conf
-    echo "mkinitcpio.conf fixed"
+
+    echo "✓ Fixed /etc/mkinitcpio.conf"
 else
-    echo "Warning: /etc/mkinitcpio.conf not found!"
+    echo "✗ Warning: /etc/mkinitcpio.conf not found!"
 fi
 
-if [ -f /etc/mkinitcpio.conf.d/archiso.conf ]; then
-    echo "Removing archiso.conf..."
-    rm -f /etc/mkinitcpio.conf.d/archiso.conf
+echo ""
+echo "[2/5] Verifying configuration..."
+
+# Sprawdź czy nie ma już referencji do archiso
+if grep -r "archiso" /etc/mkinitcpio.conf /etc/mkinitcpio.d/ 2>/dev/null; then
+    echo "✗ WARNING: Still found archiso references!"
+    echo "Attempting aggressive cleanup..."
+
+    # Agresywne czyszczenie - usuń wszystkie linie z archiso
+    find /etc/mkinitcpio.d/ -type f -name "*.preset" -exec sed -i '/archiso/d' {} \;
+
+    echo "✓ Aggressive cleanup done"
+else
+    echo "✓ No archiso references found"
 fi
 
-echo "[2/4] Rebuilding initramfs..."
-if ! mkinitcpio -P; then
-    echo "Error: Failed to rebuild initramfs"
+echo ""
+echo "[3/5] Rebuilding initramfs..."
+
+# Najpierw spróbuj dla konkretnego kernela
+if [ -f /boot/vmlinuz-linux ]; then
+    echo "Rebuilding for linux kernel..."
+    if mkinitcpio -p linux 2>&1 | tee /tmp/mkinitcpio.log; then
+        echo "✓ Initramfs rebuilt successfully"
+    else
+        echo "✗ Error rebuilding initramfs"
+        echo "Log:"
+        cat /tmp/mkinitcpio.log
+        exit 1
+    fi
+else
+    echo "✗ Kernel not found at /boot/vmlinuz-linux"
     exit 1
 fi
 
-echo "[3/4] Detecting firmware type..."
+echo ""
+echo "[4/5] Detecting firmware type..."
 if [ -d /sys/firmware/efi ]; then
     echo "Detected: UEFI system"
     FIRMWARE="UEFI"
@@ -42,23 +103,24 @@ else
     FIRMWARE="BIOS"
 fi
 
-echo "[4/4] Installing GRUB..."
+echo ""
+echo "[5/5] Installing GRUB..."
 
 if [ "$FIRMWARE" = "UEFI" ]; then
     # UEFI Installation
     echo "Installing GRUB for UEFI..."
 
     if ! mountpoint -q /boot/efi; then
-        echo "Error: /boot/efi is not mounted!"
+        echo "✗ Error: /boot/efi is not mounted!"
         exit 1
     fi
 
     if ! grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArqOS --recheck; then
-        echo "Error: GRUB installation failed"
+        echo "✗ Error: GRUB installation failed"
         exit 1
     fi
 
-    echo "GRUB installed to /boot/efi"
+    echo "✓ GRUB installed to /boot/efi"
 
 else
     # BIOS Installation
@@ -67,7 +129,7 @@ else
     ROOT_PARTITION=$(findmnt -n -o SOURCE / | head -1)
 
     if [ -z "$ROOT_PARTITION" ]; then
-        echo "Error: Cannot determine root partition"
+        echo "✗ Error: Cannot determine root partition"
         exit 1
     fi
 
@@ -97,34 +159,18 @@ else
         if [ "$HAS_BIOSBOOT" -gt 0 ]; then
             echo "BIOS Boot partition found - installing normally"
             if ! grub-install --target=i386-pc "$DISK"; then
-                echo "Error: GRUB installation failed"
+                echo "✗ Error: GRUB installation failed"
                 exit 1
             fi
         else
             echo "No BIOS Boot partition found!"
-            echo "This is UNRELIABLE but attempting with --force..."
-            echo ""
-            echo "NOTE: For proper installation, recreate partitions with:"
-            echo "  - 1MB BIOS Boot partition (type: ef02) at the start"
-            echo "  OR convert to MBR/DOS partition table"
-            echo ""
+            echo "Attempting with --force (UNRELIABLE)..."
 
-            # Próbuj z --force (blocklists)
             if grub-install --target=i386-pc --force "$DISK" 2>&1 | tee /tmp/grub-install.log; then
-                echo "GRUB installed with blocklists (UNRELIABLE)"
-                echo "System may fail to boot after kernel updates!"
+                echo "⚠ GRUB installed with blocklists (UNRELIABLE)"
+                echo "⚠ System may fail to boot after kernel updates!"
             else
-                echo "=========================================="
-                echo "CRITICAL: GRUB installation failed!"
-                echo "=========================================="
-                echo ""
-                echo "Your disk uses GPT without a BIOS Boot partition."
-                echo "Options to fix:"
-                echo ""
-                echo "1. Restart installation and add 1MB BIOS Boot partition"
-                echo "2. Convert disk to MBR (if <2TB)"
-                echo "3. Enable UEFI in BIOS settings"
-                echo ""
+                echo "✗ CRITICAL: GRUB installation failed!"
                 cat /tmp/grub-install.log
                 exit 1
             fi
@@ -133,15 +179,16 @@ else
         # MBR/DOS - zwykła instalacja
         echo "MBR partition table - installing normally"
         if ! grub-install --target=i386-pc "$DISK"; then
-            echo "Error: GRUB installation failed"
+            echo "✗ Error: GRUB installation failed"
             exit 1
         fi
     fi
 
-    echo "GRUB installed to $DISK"
+    echo "✓ GRUB installed to $DISK"
 fi
 
 # Konfiguruj GRUB
+echo ""
 echo "Configuring GRUB..."
 if [ -f /etc/default/grub ]; then
     sed -i '/GRUB_DISABLE_OS_PROBER/d' /etc/default/grub
@@ -157,12 +204,13 @@ fi
 # Generuj config
 echo "Generating GRUB configuration..."
 if ! grub-mkconfig -o /boot/grub/grub.cfg; then
-    echo "Error: Failed to generate GRUB config"
+    echo "✗ Error: Failed to generate GRUB config"
     exit 1
 fi
 
+echo ""
 echo "=============================================="
-echo "    Bootloader installation complete!"
+echo "  ✓ Bootloader installation complete!"
 echo "=============================================="
 
 # Jeśli użyto blocklists, ostrzeż

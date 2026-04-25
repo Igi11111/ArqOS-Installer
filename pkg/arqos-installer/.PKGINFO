@@ -6,9 +6,9 @@ xdata = pkgtype=pkg
 pkgver = 1.5.3.r-1
 pkgdesc = Arq Operating System Installer
 url = https://github.com/Petexy
-builddate = 1777108014
+builddate = 1777118216
 packager = Unknown Packager
-size = 2662291
+size = 2673966
 arch = x86_64
 license = GPL-3.0
 depend = python-gobject
