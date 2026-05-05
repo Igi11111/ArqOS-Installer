@@ -1,9 +1,9 @@
 [Desktop Entry]
 Name=ArqOS Installer
 
-Exec=python /usr/share/linexin-installer/installer
+Exec=python /usr/share/arqos-installer/installer
 
-Icon=/usr/share/linexin-installer/images/github.petexy.arqosinstaller.svg
+Icon=/usr/share/arqos-installer/images/github.petexy.arqosinstaller.svg
 
 Terminal=false
 Type=Application

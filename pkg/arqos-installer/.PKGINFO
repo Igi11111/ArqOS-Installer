@@ -3,12 +3,12 @@
 pkgname = arqos-installer
 pkgbase = arqos-installer
 xdata = pkgtype=pkg
-pkgver = 1.5.3.r-1
+pkgver = 1.2-1
 pkgdesc = Arq Operating System Installer
 url = https://github.com/Petexy
-builddate = 1777118216
+builddate = 1778015524
 packager = Unknown Packager
-size = 2673966
+size = 2663634
 arch = x86_64
 license = GPL-3.0
 depend = python-gobject

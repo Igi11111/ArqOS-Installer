@@ -380,7 +380,7 @@ class InstallationWidget(Gtk.Box):
         fi
         
         # Create mount point if it doesn't exist
-        mkdir -p /tmp/linexin_installer/root
+        mkdir -p /tmp/arqos_installer/root
         
         # Special handling for different filesystem types
         case "$FS_TYPE" in
@@ -411,13 +411,13 @@ class InstallationWidget(Gtk.Box):
                 # Mount with appropriate options
                 if [ ! -z "$SUBVOL" ] && [ "$SUBVOL" != "" ]; then
                     echo "Mounting Btrfs with subvolume: $SUBVOL"
-                    mount -t btrfs -o subvol="$SUBVOL" "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                    mount -t btrfs -o subvol="$SUBVOL" "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 elif [ ! -z "$SUBVOLID" ]; then
                     echo "Mounting Btrfs with subvolume ID: $SUBVOLID"
-                    mount -t btrfs -o subvolid="$SUBVOLID" "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                    mount -t btrfs -o subvolid="$SUBVOLID" "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 else
                     echo "Mounting Btrfs root (no subvolume specified)"
-                    mount -t btrfs "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                    mount -t btrfs "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 fi
                 
                 MOUNT_RESULT=$?
@@ -447,8 +447,8 @@ class InstallationWidget(Gtk.Box):
                         
                         if [ ! -z "$SUBVOL_NAME" ] && [ "$SUBVOL_NAME" != "" ]; then
                             echo "Found $MOUNT_POINT subvolume: $SUBVOL_NAME"
-                            mkdir -p "/tmp/linexin_installer/root$MOUNT_POINT"
-                            mount -t btrfs -o subvol="$SUBVOL_NAME" "$ROOT_DEVICE" "/tmp/linexin_installer/root$MOUNT_POINT"
+                            mkdir -p "/tmp/arqos_installer/root$MOUNT_POINT"
+                            mount -t btrfs -o subvol="$SUBVOL_NAME" "$ROOT_DEVICE" "/tmp/arqos_installer/root$MOUNT_POINT"
                             if [ $? -eq 0 ]; then
                                 echo "Successfully mounted $MOUNT_POINT subvolume"
                             else
@@ -461,54 +461,54 @@ class InstallationWidget(Gtk.Box):
                 
             ext2|ext3|ext4)
                 echo "Mounting ext filesystem"
-                mount -t "$FS_TYPE" "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                mount -t "$FS_TYPE" "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 MOUNT_RESULT=$?
                 ;;
                 
             xfs)
                 echo "Mounting XFS filesystem"
-                mount -t xfs "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                mount -t xfs "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 MOUNT_RESULT=$?
                 ;;
                 
             f2fs)
                 echo "Mounting F2FS filesystem"
-                mount -t f2fs "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                mount -t f2fs "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 MOUNT_RESULT=$?
                 ;;
                 
             jfs)
                 echo "Mounting JFS filesystem"
-                mount -t jfs "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                mount -t jfs "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 MOUNT_RESULT=$?
                 ;;
                 
             reiserfs)
                 echo "Mounting ReiserFS filesystem"
-                mount -t reiserfs "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                mount -t reiserfs "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 MOUNT_RESULT=$?
                 ;;
                 
             ntfs|ntfs-3g)
                 echo "Mounting NTFS filesystem"
                 # Try ntfs3 driver first (kernel driver), fallback to ntfs-3g (FUSE)
-                mount -t ntfs3 "$ROOT_DEVICE" "/tmp/linexin_installer/root" 2>/dev/null
+                mount -t ntfs3 "$ROOT_DEVICE" "/tmp/arqos_installer/root" 2>/dev/null
                 if [ $? -ne 0 ]; then
                     echo "ntfs3 driver failed, trying ntfs-3g..."
-                    mount -t ntfs-3g "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                    mount -t ntfs-3g "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 fi
                 MOUNT_RESULT=$?
                 ;;
                 
             vfat|msdos)
                 echo "Mounting FAT filesystem"
-                mount -t "$FS_TYPE" "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                mount -t "$FS_TYPE" "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 MOUNT_RESULT=$?
                 ;;
                 
             *)
                 echo "Filesystem type: $FS_TYPE - attempting auto-detect mount"
-                mount "$ROOT_DEVICE" "/tmp/linexin_installer/root"
+                mount "$ROOT_DEVICE" "/tmp/arqos_installer/root"
                 MOUNT_RESULT=$?
                 ;;
         esac
@@ -518,21 +518,21 @@ class InstallationWidget(Gtk.Box):
             echo "Successfully mounted root filesystem"
             
             # Verify mount
-            if mountpoint -q /tmp/linexin_installer/root; then
+            if mountpoint -q /tmp/arqos_installer/root; then
                 echo "Mount point verification successful"
                 
                 # Display mount information
-                df -h /tmp/linexin_installer/root
+                df -h /tmp/arqos_installer/root
                 
                 # Show all mounted filesystems related to our mount point
                 echo "All mounted filesystems:"
-                mount | grep "/tmp/linexin_installer/root"
+                mount | grep "/tmp/arqos_installer/root"
                 
                 # For Btrfs, show subvolume information
                 if [ "$FS_TYPE" = "btrfs" ]; then
                     echo "Btrfs subvolume information:"
                     if command -v btrfs >/dev/null 2>&1; then
-                        btrfs subvolume list /tmp/linexin_installer/root 2>/dev/null || true
+                        btrfs subvolume list /tmp/arqos_installer/root 2>/dev/null || true
                     fi
                 fi
             else
@@ -690,7 +690,7 @@ class InstallationWidget(Gtk.Box):
         fi
         
         # Create mount point
-        mkdir -p /tmp/linexin_installer/root/boot
+        mkdir -p /tmp/arqos_installer/root/boot
         
         # Mount the boot partition based on filesystem type
         echo "Mounting boot device: $BOOT_DEVICE"
@@ -700,51 +700,51 @@ class InstallationWidget(Gtk.Box):
                 if [ ! -z "$BOOT_SUBVOL" ] && [ "$BOOT_SUBVOL" != "" ]; then
                     # Mount Btrfs subvolume
                     echo "Mounting Btrfs boot subvolume: $BOOT_SUBVOL"
-                    mount -t btrfs -o subvol="$BOOT_SUBVOL" "$BOOT_DEVICE" "/tmp/linexin_installer/root/boot"
+                    mount -t btrfs -o subvol="$BOOT_SUBVOL" "$BOOT_DEVICE" "/tmp/arqos_installer/root/boot"
                 else
                     echo "Mounting Btrfs boot (no subvolume)"
-                    mount -t btrfs "$BOOT_DEVICE" "/tmp/linexin_installer/root/boot"
+                    mount -t btrfs "$BOOT_DEVICE" "/tmp/arqos_installer/root/boot"
                 fi
                 ;;
                 
             ext2|ext3|ext4)
                 echo "Mounting ext boot filesystem"
-                mount -t "$FS_TYPE" "$BOOT_DEVICE" "/tmp/linexin_installer/root/boot"
+                mount -t "$FS_TYPE" "$BOOT_DEVICE" "/tmp/arqos_installer/root/boot"
                 ;;
                 
             xfs)
                 echo "Mounting XFS boot filesystem"
-                mount -t xfs "$BOOT_DEVICE" "/tmp/linexin_installer/root/boot"
+                mount -t xfs "$BOOT_DEVICE" "/tmp/arqos_installer/root/boot"
                 ;;
                 
             vfat|msdos)
                 echo "Mounting FAT boot filesystem (EFI)"
-                mount -t "$FS_TYPE" "$BOOT_DEVICE" "/tmp/linexin_installer/root/boot"
+                mount -t "$FS_TYPE" "$BOOT_DEVICE" "/tmp/arqos_installer/root/boot"
                 ;;
                 
             ntfs|ntfs-3g)
                 echo "Mounting NTFS boot filesystem"
-                mount -t ntfs3 "$BOOT_DEVICE" "/tmp/linexin_installer/root/boot" 2>/dev/null || \
-                mount -t ntfs-3g "$BOOT_DEVICE" "/tmp/linexin_installer/root/boot"
+                mount -t ntfs3 "$BOOT_DEVICE" "/tmp/arqos_installer/root/boot" 2>/dev/null || \
+                mount -t ntfs-3g "$BOOT_DEVICE" "/tmp/arqos_installer/root/boot"
                 ;;
                 
             *)
                 echo "Filesystem type: $FS_TYPE - attempting auto-detect mount"
-                mount "$BOOT_DEVICE" "/tmp/linexin_installer/root/boot"
+                mount "$BOOT_DEVICE" "/tmp/arqos_installer/root/boot"
                 ;;
         esac
         
         # Check if mount was successful
         if [ $? -eq 0 ]; then
             echo "Successfully mounted boot partition"
-            if mountpoint -q /tmp/linexin_installer/root/boot; then
+            if mountpoint -q /tmp/arqos_installer/root/boot; then
                 echo "Boot mount point verification successful"
-                df -h /tmp/linexin_installer/root/boot
+                df -h /tmp/arqos_installer/root/boot
                 
                 # Check for EFI files
-                if [ -d "/tmp/linexin_installer/root/boot/EFI" ]; then
+                if [ -d "/tmp/arqos_installer/root/boot/EFI" ]; then
                     echo "EFI directory found - this is an EFI boot partition"
-                elif [ -d "/tmp/linexin_installer/root/boot/grub" ] || [ -d "/tmp/linexin_installer/root/boot/grub2" ]; then
+                elif [ -d "/tmp/arqos_installer/root/boot/grub" ] || [ -d "/tmp/arqos_installer/root/boot/grub2" ]; then
                     echo "GRUB directory found - this is a BIOS/Legacy boot partition"
                 fi
             fi
@@ -753,9 +753,9 @@ class InstallationWidget(Gtk.Box):
             echo "This may not be critical if boot is part of the root partition"
             
             # Check if /boot exists on root
-            if [ -d "/tmp/linexin_installer/root/boot" ]; then
+            if [ -d "/tmp/arqos_installer/root/boot" ]; then
                 echo "Boot directory exists on root partition"
-                ls -la /tmp/linexin_installer/root/boot/ 2>/dev/null | head -5
+                ls -la /tmp/arqos_installer/root/boot/ 2>/dev/null | head -5
             fi
             
             exit 0
@@ -813,7 +813,7 @@ class InstallationWidget(Gtk.Box):
                 continue
             fi
             
-            TARGET_DIR="/tmp/linexin_installer/root$MOUNTPOINT"
+            TARGET_DIR="/tmp/arqos_installer/root$MOUNTPOINT"
             mkdir -p "$TARGET_DIR"
             
             echo "Mounting $RESOLVED_DEVICE to $TARGET_DIR"
@@ -833,7 +833,7 @@ class InstallationWidget(Gtk.Box):
         """Generate a bash command to copy installer configuration files."""
         return """
         CONFIG_DIR="/tmp/installer_config"
-        TARGET_DIR="/tmp/linexin_installer/root"
+        TARGET_DIR="/tmp/arqos_installer/root"
         
         if [ ! -d "$CONFIG_DIR" ]; then
             echo "No installer configuration directory found at $CONFIG_DIR, skipping"
@@ -863,7 +863,7 @@ class InstallationWidget(Gtk.Box):
         # All commands will be run with sudo since we're on live-cd with passwordless sudo
         steps.append(InstallationStep(
             label="Creating installation directories",
-            command=["sudo", "mkdir", "-p", "/tmp/linexin_installer/rootfs", "/tmp/linexin_installer/root"],
+            command=["sudo", "mkdir", "-p", "/tmp/arqos_installer/rootfs", "/tmp/arqos_installer/root"],
             description="Setting up temporary installation directories",
             weight=0.5,
             critical=True
@@ -871,7 +871,7 @@ class InstallationWidget(Gtk.Box):
         
         steps.append(InstallationStep(
             label="Mounting installation image",
-            command=["sudo", "mount", loop_device, "/tmp/linexin_installer/rootfs"],
+            command=["sudo", "mount", loop_device, "/tmp/arqos_installer/rootfs"],
             description=f"Mounting {loop_device} containing the system image",
             weight=1.0,
             critical=True
@@ -887,7 +887,7 @@ class InstallationWidget(Gtk.Box):
         
         steps.append(InstallationStep(
             label="Creating boot directory",
-            command=["sudo", "mkdir", "-p", "/tmp/linexin_installer/root/boot"],
+            command=["sudo", "mkdir", "-p", "/tmp/arqos_installer/root/boot"],
             description="Creating boot mount point",
             weight=0.2,
             critical=False
@@ -911,7 +911,7 @@ class InstallationWidget(Gtk.Box):
         
         steps.append(InstallationStep(
             label="Copying system files",
-            command=["sudo", "rsync", "-aAXv", "--info=progress2", "/tmp/linexin_installer/rootfs/", "/tmp/linexin_installer/root/"],
+            command=["sudo", "rsync", "-aAXv", "--info=progress2", "/tmp/arqos_installer/rootfs/", "/tmp/arqos_installer/root/"],
             description="Copying the system image to your disk. This may take several minutes...",
             weight=10.0,
             critical=True
@@ -919,7 +919,7 @@ class InstallationWidget(Gtk.Box):
         
         steps.append(InstallationStep(
             label="Verifying file copy",
-            command=["sudo", "bash", "-c", "echo 'Files copied:' && find /tmp/linexin_installer/root -type f | wc -l"],
+            command=["sudo", "bash", "-c", "echo 'Files copied:' && find /tmp/arqos_installer/root -type f | wc -l"],
             description="Verifying that files were copied successfully",
             weight=0.5,
             critical=True
@@ -946,7 +946,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Copying kernel",
-            command=["bash", "-c", "sudo cp -rf /run/archiso/bootmnt/arch/boot/x86_64/* /tmp/linexin_installer/root/boot"],
+            command=["bash", "-c", "sudo cp -rf /run/archiso/bootmnt/arch/boot/x86_64/* /tmp/arqos_installer/root/boot"],
             description="Ensuring kernel image is present on new rootfs in case of no internet",
             weight=1.0,
             critical=True
@@ -954,7 +954,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Removing wheel sudo configuration",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "rm", "/etc/sudoers.d/g_wheel"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "rm", "/etc/sudoers.d/g_wheel"],
             description="Removing temporary sudo configuration",
             weight=0.1,
             critical=False
@@ -962,7 +962,7 @@ class InstallationWidget(Gtk.Box):
         
         steps.append(InstallationStep(
             label="Changing system's language",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "bash", "-c", "/language.sh"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "bash", "-c", "/language.sh"],
             description="Changing system's language to a selected one",
             weight=1.0,
             critical=False
@@ -970,7 +970,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Setting up timezone",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "bash", "-c", "/setup_timezone.sh"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "bash", "-c", "/setup_timezone.sh"],
             description="Linking timezone to the selected one in the installer",
             weight=1.0,
             critical=False
@@ -978,7 +978,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Setting up keyboard layout",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "bash", "-c", "/setup_keyboard.sh"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "bash", "-c", "/setup_keyboard.sh"],
             description="Using proper commands in chroot environment to set up keyboard layout",
             weight=1.0,
             critical=False
@@ -986,7 +986,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Adding user",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "bash", "-c", "/add_users.sh"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "bash", "-c", "/add_users.sh"],
             description="Adding user, setting it's password and hostname for the PC",
             weight=1.0,
             critical=False
@@ -994,7 +994,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Removing unused microcode",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "bash", "-c", "/remove_ucode.sh"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "bash", "-c", "/remove_ucode.sh"],
             description="Removing ucode for non-used x86_64 processor",
             weight=1.0,
             critical=False
@@ -1002,7 +1002,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Cleaning out rootfs",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "bash", "-c", "/post-install.sh"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "bash", "-c", "/post-install.sh"],
             description="Cleaning out rootfs from LiveISO's config and applying post-install scripts",
             weight=5.0,
             critical=True
@@ -1010,7 +1010,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Installing bootloader",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "bash", "-c", "/bootloader.sh"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "bash", "-c", "/bootloader.sh"],
             description="Checking for other systems installed and installing proper bootloader",
             weight=3.0,
             critical=True
@@ -1018,7 +1018,7 @@ class InstallationWidget(Gtk.Box):
         
         steps.append(InstallationStep(
             label="Removing unused GPU drivers",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "bash", "-c", "/remove_gpu.sh"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "bash", "-c", "/remove_gpu.sh"],
             description="Removing unused GPU drivers",
             weight=3.0,
             critical=False
@@ -1026,7 +1026,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Removing unused microcode",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "bash", "-c", "/remove_ucode.sh"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "bash", "-c", "/remove_ucode.sh"],
             description="Removing unused microcode",
             weight=3.0,
             critical=False
@@ -1048,7 +1048,7 @@ class InstallationWidget(Gtk.Box):
         if install_flatpaks:
             steps.append(InstallationStep(
                 label="Setting up Flatpak",
-                command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "flatpak", "update", "--appstream"],
+                command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "flatpak", "update", "--appstream"],
                 description="Installing Flatpak apps and support for AppImage",
                 weight=5.0,
                 critical=False
@@ -1056,7 +1056,7 @@ class InstallationWidget(Gtk.Box):
 
             steps.append(InstallationStep(
                 label="Installing Flatpak and AppImage support",
-                command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "flatpak", "install", "app.zen_browser.zen", "io.github.Faugus.faugus-launcher", "it.mijorus.gearlever", "com.github.tchx84.Flatseal", "com.usebottles.bottles", "app.twintaillauncher.ttl", "com.heroicgameslauncher.hgl", "--assumeyes"],
+                command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "flatpak", "install", "app.zen_browser.zen", "io.github.Faugus.faugus-launcher", "it.mijorus.gearlever", "com.github.tchx84.Flatseal", "com.usebottles.bottles", "app.twintaillauncher.ttl", "com.heroicgameslauncher.hgl", "--assumeyes"],
                 description="Installing Flatpak apps and support for AppImage",
                 weight=5.0,
                 critical=False
@@ -1064,7 +1064,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Cleaning out rootfs",
-            command=["sudo", "arch-chroot", "/tmp/linexin_installer/root", "bash", "-c", "rm /*.sh"],
+            command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "bash", "-c", "rm /*.sh"],
             description="Cleaning out rootfs from LiveISO's config and applying post-install scripts",
             weight=1.0,
             critical=False
@@ -1072,7 +1072,7 @@ class InstallationWidget(Gtk.Box):
 
         steps.append(InstallationStep(
             label="Unmounting filesystems",
-            command=["sudo", "bash", "-c", "umount -R /tmp/linexin_installer/root/boot && umount /tmp/linexin_installer/root && umount /tmp/linexin_installer/rootfs"],
+            command=["sudo", "bash", "-c", "umount -R /tmp/arqos_installer/root/boot && umount /tmp/arqos_installer/root && umount /tmp/arqos_installer/rootfs"],
             description="Safely unmounting all filesystems",
             weight=0.5,
             critical=False

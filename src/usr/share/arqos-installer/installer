@@ -13,7 +13,7 @@ from welcome_widget import WelcomeWidget
 from installation_template_widget import InstallationTemplateWidget
 from disk_utility_widget import DiskUtilityWidget
 from language_widget import LanguageWidget
-from timezone_widget import TimezoneWidget 
+from timezone_widget import TimezoneWidget
 from keyboard_layout_widget import KeyboardLayoutWidget
 from user_creation_widget import UserCreationWidget
 from installation_widget import InstallationWidget
@@ -27,7 +27,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Gtk, Adw, GLib, Gdk
 
 # --- Localization Setup ---
-APP_NAME = "linexin-installer"
+APP_NAME = "arqos-installer"
 LOCALE_DIR = os.path.abspath("/usr/share/locale")
 
 # Set initial language (will default to system language if not specified)
@@ -42,7 +42,7 @@ class MainWindow(Adw.ApplicationWindow):
         config_dir = "/tmp/installer_config"
         if os.path.exists(config_dir):
             import shutil
-            shutil.rmtree(config_dir)  
+            shutil.rmtree(config_dir)
 
 
         super().__init__(application=app)
@@ -77,7 +77,7 @@ class MainWindow(Adw.ApplicationWindow):
         .proceed_button {
             font-size: 16px;
             min-width: 300px;
-            min-height: 40px; 
+            min-height: 40px;
         }
         .welcome_text {
             font-size: 40px;
@@ -94,7 +94,7 @@ class MainWindow(Adw.ApplicationWindow):
             css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
-        
+
         #Initialize all widgets - INCLUDE YOUR MAIN FUNCTION HERE
         self.welcome_page = WelcomeWidget()
         self.language_page = LanguageWidget()
@@ -108,12 +108,12 @@ class MainWindow(Adw.ApplicationWindow):
         self.installation_page.connect('installation-complete', self.on_installation_finished)
         self.finish_page = FinishWidget()
         #self.custom_page = CustomWidget()
-        
+
         ######################
         # HEADERBAR ADDITIONS
 
         action_buttons_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        
+
         self.refresh_button = Gtk.Button.new_from_icon_name("view-refresh-symbolic")
         self.refresh_button.connect("clicked", self.disk_utility_page.on_refresh_clicked)
         self.refresh_button.set_opacity(0)
@@ -159,7 +159,7 @@ class MainWindow(Adw.ApplicationWindow):
                 localization_manager.register_widget(page)
 
         # Also register the main window for header bar elements
-        localization_manager.register_widget(self)      
+        localization_manager.register_widget(self)
 
         # --- Connect signals ---
         self.welcome_page.btn_install.connect("clicked", self.on_install_clicked)
@@ -192,14 +192,14 @@ class MainWindow(Adw.ApplicationWindow):
 
     def on_advanced_clicked(self, button):
         current_page = self.main_stack.get_visible_child_name()
-        
+
         if current_page == "installtemplate":
             # Call the new method in installation_template_widget
             if hasattr(self.installation_template_page, 'on_open_gparted_clicked'):
                 self.installation_template_page.on_open_gparted_clicked()
             else:
                 print("Error: on_open_gparted_clicked not found in installation_template_page")
-                
+
         elif current_page == "disk_utility":
             # Call the existing method in disk_utility_widget
             self.disk_utility_page.on_open_disks_clicked(button)
@@ -230,11 +230,11 @@ class MainWindow(Adw.ApplicationWindow):
         """Handle template selection from installation template widget"""
         print(f"Installation template selected: {template_type}")
         print(f"Template data: {template_data}")
-        
+
         # Store the template data for later use
         self.selected_template = template_type
         self.template_data = template_data
-        
+
         if template_type == "manual":
             # For manual partitioning, go directly to disk utility
             self.main_stack.set_visible_child_name("disk_utility")
@@ -326,7 +326,7 @@ class MainWindow(Adw.ApplicationWindow):
 
 
     def on_install_clicked(self, button):
-        
+
         """Create installer_config directory and copy required files"""
         config_dir = "/tmp/installer_config"
         app_dir = self.get_app_directory()
@@ -334,7 +334,7 @@ class MainWindow(Adw.ApplicationWindow):
             # Create the config directory
             os.makedirs(config_dir, exist_ok=True)
             print(f"Created config directory: {config_dir}")
-            
+
             # Copy files if they exist
             files_to_copy = ["bootloader.sh", "post-install.sh", "remove_gpu.sh", "remove_ucode.sh"]
             for filename in files_to_copy:
@@ -346,38 +346,38 @@ class MainWindow(Adw.ApplicationWindow):
                     print(f"Copied {filename} to {config_dir}")
                 else:
                     print(f"Warning: {filename} not found in {app_dir}")
-            
+
             # Always advance to next screen regardless of file copying results
             self.main_stack.set_visible_child_name("language")
-            
+
         except Exception as e:
             print(f"Error setting up installer config: {e}")
             # You might want to show an error dialog here instead of silently failing
 
-        
+
     def on_close_request(self, window):
         """Handle application close request - unmount directories before closing"""
         print("Application is closing, attempting to unmount directories...")
-        
+
         # List of directories to unmount (in order)
         mount_points = [
-            "/tmp/linexin_installer/root/boot",
-            "/tmp/linexin_installer/root",
-            "/tmp/linexin_installer/rootfs"
+            "/tmp/arqos_installer/root/boot",
+            "/tmp/arqos_installer/root",
+            "/tmp/arqos_installer/rootfs"
         ]
-        
+
         for mount_point in mount_points:
             try:
                 # Check if the directory exists and is mounted
                 if os.path.exists(mount_point):
                     print(f"Attempting to unmount {mount_point}...")
                     result = subprocess.run(
-                        ["sudo", "umount", "-R", mount_point], 
-                        capture_output=True, 
-                        text=True, 
+                        ["sudo", "umount", "-R", mount_point],
+                        capture_output=True,
+                        text=True,
                         timeout=10
                     )
-                    
+
                     if result.returncode == 0:
                         print(f"Successfully unmounted {mount_point}")
                     else:
@@ -385,9 +385,9 @@ class MainWindow(Adw.ApplicationWindow):
                         # Try a lazy unmount as fallback
                         try:
                             fallback_result = subprocess.run(
-                                ["sudo", "umount", "-l", mount_point], 
-                                capture_output=True, 
-                                text=True, 
+                                ["sudo", "umount", "-l", mount_point],
+                                capture_output=True,
+                                text=True,
                                 timeout=5
                             )
                             if fallback_result.returncode == 0:
@@ -398,15 +398,15 @@ class MainWindow(Adw.ApplicationWindow):
                             print(f"Exception during lazy unmount of {mount_point}: {e}")
                 else:
                     print(f"Mount point {mount_point} does not exist, skipping...")
-                    
+
             except subprocess.TimeoutExpired:
                 print(f"Timeout while trying to unmount {mount_point}")
             except Exception as e:
                 print(f"Exception while trying to unmount {mount_point}: {e}")
-        
+
         print("Unmount operations completed, closing application.")
         # Return False to allow the window to close
-        return False    
+        return False
 
 
 class Installer(Adw.Application):
