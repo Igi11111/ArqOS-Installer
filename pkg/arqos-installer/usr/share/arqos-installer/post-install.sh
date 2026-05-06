@@ -46,12 +46,10 @@ check_de_selection() {
 
     elif [[ "$de_value" == "1" ]]; then
         print_msg "KDE Plasma selected (already installed)"
-
         # Usuń GNOME jeśli jest zainstalowane
-        if pacman -Qi gnome &>/dev/null; then
-            print_msg "Removing GNOME..."
-            pacman -Rsc gnome --noconfirm || true
-        fi
+        print_msg "Removing GNOME..."
+        pacman -Rsc gnome --noconfirm || true
+
 
         print_msg "KDE Plasma configuration complete"
         return 0
@@ -147,6 +145,8 @@ check_de_selection
 # Wyczyść pliki konfiguracyjne
 print_msg "Cleaning up configuration files..."
 rm -f "$DE_SELECTION_FILE" "$FLATPAK_FILE" "$UPDATES_FILE"
+
+pacman -Rsc arqos-installer
 
 echo "=============================================="
 echo "    Post-installation cleanup complete!"
