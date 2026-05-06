@@ -33,13 +33,13 @@ check_de_selection() {
 
     if [[ "$de_value" == "0" ]]; then
         print_msg "Installing GNOME desktop environment..."
-        # pacman -Sy gnome --noconfirm --overwrite '*'
+        pacman -Sy gnome --noconfirm --overwrite '*'
 
         # Usuń KDE jeśli jest zainstalowane
-        if pacman -Qi plasma-desktop &>/dev/null; then
+        # if pacman -Qi plasma-desktop &>/dev/null; then
             print_msg "Removing KDE Plasma..."
             pacman -Rsc plasma-desktop --noconfirm || true
-        fi
+        # fi
 
         print_msg "GNOME installation complete"
         return 0
@@ -47,8 +47,8 @@ check_de_selection() {
     elif [[ "$de_value" == "1" ]]; then
         print_msg "KDE Plasma selected (already installed)"
         # Usuń GNOME jeśli jest zainstalowane
-        print_msg "Removing GNOME..."
-        pacman -Rsc gnome --noconfirm || true
+        # print_msg "Removing GNOME..."
+        # pacman -Rsc gnome --noconfirm || true
 
 
         print_msg "KDE Plasma configuration complete"
@@ -111,11 +111,19 @@ rm -f /root/.automated_script.sh
 
 echo "[9/9] Enabling essential services..."
 
+# Pacman keys setting
+script -q -c "pacman-key --init" /dev/null
+script -q -c "pacman-key --populate archlinux" /dev/null
+pacman -Syu --noconfirm || true
+
 # NetworkManager
 if systemctl list-unit-files | grep -q NetworkManager.service; then
     systemctl enable NetworkManager
     echo "NetworkManager enabled"
 fi
+
+# ===== WYWOŁANIE FUNKCJI WYBORU DE =====
+check_de_selection
 
 # Display Manager
 if systemctl list-unit-files | grep -q gdm.service; then
@@ -139,14 +147,11 @@ echo "=============================================="
 echo "    Essential services configuration complete"
 echo "=============================================="
 
-# ===== WYWOŁANIE FUNKCJI WYBORU DE =====
-check_de_selection
-
 # Wyczyść pliki konfiguracyjne
 print_msg "Cleaning up configuration files..."
 rm -f "$DE_SELECTION_FILE" "$FLATPAK_FILE" "$UPDATES_FILE"
 
-pacman -Rsc arqos-installer
+pacman -Rsc arqos-installer --noconfirm || true
 
 echo "=============================================="
 echo "    Post-installation cleanup complete!"

@@ -1056,7 +1056,7 @@ class InstallationWidget(Gtk.Box):
 
             steps.append(InstallationStep(
                 label="Installing Flatpak and AppImage support",
-                command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "flatpak", "install", "app.zen_browser.zen", "io.github.Faugus.faugus-launcher", "it.mijorus.gearlever", "com.github.tchx84.Flatseal", "com.usebottles.bottles", "app.twintaillauncher.ttl", "com.heroicgameslauncher.hgl", "--assumeyes"],
+                command=["sudo", "arch-chroot", "/tmp/arqos_installer/root", "flatpak", "install", "app.zen_browser.zen", "it.mijorus.gearlever", "com.github.tchx84.Flatseal",  "com.heroicgameslauncher.hgl", "--assumeyes"],
                 description="Installing Flatpak apps and support for AppImage",
                 weight=5.0,
                 critical=False
