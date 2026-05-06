@@ -79,6 +79,12 @@ class DEPicker(Gtk.Box):
                 "description": "Plasma-based desktop interface",
                 "icon": "screen2.png",
                 "requires_internet": False
+            },
+            {
+                "name": "Budgie",
+                "description": "Budgie desktop interface",
+                "icon": "screen3.png",
+                "requires_internet": True
             }
         ]
 

@@ -54,12 +54,17 @@ check_de_selection() {
         print_msg "KDE Plasma configuration complete"
         return 0
 
-    else
-        print_msg "Invalid DE selection value: '$de_value' (expected 0 or 1)"
-        return 2
-    fi
+elif [[ "$de_value" == "2" ]]; then
+        print_msg "Installing Budgie Desktop Environment..."
+    # 1. aktualizacja systemu NAJPIERW (bez mieszania w DE)
+        pacman -Syu --noconfirm
+    # 2. usunięcie KDE (jeśli jest)
+        pacman -Rns plasma-desktop kwin-x11 --noconfirm || true
+        pacman -S budgie --noconfirm
+        print_msg "Budgie installation complete"
+    return 0
+fi
 }
-
 # ===== GŁÓWNY SKRYPT =====
 echo "=============================================="
 echo "    ArqOS Post-Installation Cleanup"

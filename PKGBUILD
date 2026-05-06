@@ -1,7 +1,7 @@
 # Maintainer: Petexy <https://github.com/Petexy>
 
 pkgname=arqos-installer
-pkgver=1.2
+pkgver=1.3
 pkgrel=1
 pkgdesc='Arq Operating System Installer'
 url='https://github.com/Petexy'
