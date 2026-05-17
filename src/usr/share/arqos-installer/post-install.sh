@@ -65,6 +65,112 @@ elif [[ "$de_value" == "2" ]]; then
     return 0
 fi
 }
+
+
+
+
+# ===== FUNKCJA USTAWIAJĄCA DOMYŚLNEGO USERA =====
+set_default_user() {
+    print_msg "Setting default user for display manager..."
+
+    # Znajdź utworzonego użytkownika z pliku add_users.sh lub /etc/passwd
+    # Najpierw sprawdź czy skrypt add_users.sh istnieje i zawiera USERNAME
+    if [ -f /add_users.sh ]; then
+        CREATED_USER=$(grep "^USERNAME=" /add_users.sh | cut -d"'" -f2)
+        print_msg "Found username from add_users.sh: $CREATED_USER"
+    fi
+
+    # Jeśli nie znaleziono w skrypcie, sprawdź /etc/passwd
+    if [ -z "$CREATED_USER" ]; then
+        CREATED_USER=$(grep ":/home/" /etc/passwd | grep -v "nologin\|false" | head -1 | cut -d: -f1)
+        print_msg "Found username from /etc/passwd: $CREATED_USER"
+    fi
+
+    if [ -z "$CREATED_USER" ]; then
+        print_error "No regular user found"
+        return 1
+    fi
+
+    print_msg "Configuring display manager for user: $CREATED_USER"
+
+    # Konfiguracja dla SDDM (KDE Plasma)
+    if systemctl list-unit-files | grep -q sddm.service; then
+        print_msg "Configuring SDDM..."
+        mkdir -p /etc/sddm.conf.d
+
+        cat > /etc/sddm.conf.d/default-user.conf << EOF
+[Theme]
+Current=breeze
+
+[Users]
+DefaultUser=$CREATED_USER
+RememberLastUser=true
+RememberLastSession=true
+HideUsers=
+HideShells=
+EOF
+
+        chmod 644 /etc/sddm.conf.d/default-user.conf
+        print_msg "✓ SDDM configured with default user: $CREATED_USER"
+    fi
+
+    # Konfiguracja dla GDM (GNOME)
+    if systemctl list-unit-files | grep -q gdm.service; then
+        print_msg "Configuring GDM..."
+        mkdir -p /etc/gdm
+
+        cat > /etc/gdm/custom.conf << EOF
+[daemon]
+# DefaultSession will be selected by user
+# TimedLoginEnable=false means no automatic login
+TimedLoginEnable=false
+TimedLogin=$CREATED_USER
+TimedLoginDelay=0
+
+# Do not automatically login
+AutomaticLoginEnable=false
+AutomaticLogin=
+
+[security]
+
+[xdmcp]
+
+[chooser]
+
+[debug]
+EOF
+
+        chmod 644 /etc/gdm/custom.conf
+        print_msg "✓ GDM configured (no autologin)"
+    fi
+
+    # Konfiguracja dla LightDM
+    if systemctl list-unit-files | grep -q lightdm.service; then
+        print_msg "Configuring LightDM..."
+
+        if [ -f /etc/lightdm/lightdm.conf ]; then
+            # Upewnij się że autologin jest wyłączony
+            sed -i 's/^autologin-user=.*/# autologin-user=/' /etc/lightdm/lightdm.conf
+            sed -i 's/^autologin-session=.*/# autologin-session=/' /etc/lightdm/lightdm.conf
+
+            # Pokaż listę użytkowników
+            if grep -q "^#*greeter-hide-users=" /etc/lightdm/lightdm.conf; then
+                sed -i "s/^#*greeter-hide-users=.*/greeter-hide-users=false/" /etc/lightdm/lightdm.conf
+            else
+                echo "greeter-hide-users=false" >> /etc/lightdm/lightdm.conf
+            fi
+        fi
+
+        print_msg "✓ LightDM configured to show user list"
+    fi
+
+    print_msg "✓ Default user configuration complete"
+}
+
+
+
+
+
 # ===== GŁÓWNY SKRYPT =====
 echo "=============================================="
 echo "    ArqOS Post-Installation Cleanup"
@@ -101,8 +207,22 @@ rm -rf /etc/systemd/system/multi-user.target.wants/pacman-init.service
 rm -rf /etc/systemd/system/pacman-init.service
 
 echo "[5/9] Removing autologin configuration..."
+
+# GDM
 rm -f /etc/gdm/custom.conf
+
+# SDDM
 rm -f /etc/sddm.conf.d/autologin.conf
+rm -f /etc/sddm.conf.d/90-archiso.conf
+rm -f /etc/sddm.conf
+
+# LightDM
+rm -f /etc/lightdm/lightdm.conf.d/autologin.conf
+
+# Usuń wszelkie live ISO autologin leftovers
+find /etc/systemd/system/getty@tty1.service.d -type f -delete 2>/dev/null || true
+
+echo "Autologin configuration removed"
 
 echo "[6/9] Removing live ISO polkit rules..."
 rm -f /etc/polkit-1/rules.d/49-nopasswd_global.rules
@@ -147,6 +267,8 @@ if systemctl list-unit-files | grep -q bluetooth.service; then
     systemctl enable bluetooth
     echo "Bluetooth enabled"
 fi
+
+set_default_user
 
 echo "=============================================="
 echo "    Essential services configuration complete"

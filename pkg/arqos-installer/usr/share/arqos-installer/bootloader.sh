@@ -161,6 +161,9 @@ if ! grub-mkconfig -o /boot/grub/grub.cfg; then
     exit 1
 fi
 
+echo "Installing Grub theme by yeyushengfan258"
+bash /etc/install-grub-theme.sh
+
 echo "=============================================="
 echo "    Bootloader installation complete!"
 echo "=============================================="
